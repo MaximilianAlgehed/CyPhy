@@ -53,8 +53,7 @@ gradient :: DVal a -> Point a -> Point a
 gradient dval pt = [ (s, value (derivative dval s) pt) | s <- variables pt ]
 
 hessian :: Point a -> DVal a -> [Point a]
-hessian pt dval =
-  (\n -> gradient (derivative dval n) pt) <$> variables pt
+hessian pt dval = (\n -> gradient (derivative dval n) pt) <$> variables pt
 
 descend :: Num a => Point a -> DVal a -> a -> Point a
 descend pt dval alpha =
