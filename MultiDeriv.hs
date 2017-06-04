@@ -43,35 +43,31 @@ example = (x^2) * (y^2)
 variables :: Point a -> [String]
 variables = map fst
 
-value :: Point a -> DVal a -> a
-value pt dval = fst $ runDVal dval pt
-
-gradient :: Point a -> DVal a -> Point a
-gradient pt dval =
-  let (_, f) = runDVal dval pt
-  in  (\s -> (s, value pt (f s))) <$> variables pt
+value :: DVal a -> Point a -> a
+value dval pt = fst $ runDVal dval pt
 
 derivative :: DVal a -> Name -> DVal a
 derivative (DVal f) n = DVal $ \pt -> runDVal ((snd (f pt)) n) pt
 
+gradient :: DVal a -> Point a -> Point a
+gradient dval pt = [ (s, value (derivative dval s) pt) | s <- variables pt ]
+
 hessian :: Point a -> DVal a -> [Point a]
 hessian pt dval =
-  zipWith (\n pt -> [ (n ++ n', v) | (n', v) <- pt] )
-  (variables pt)
-  (gradient pt . derivative dval <$> variables pt)
+  (\n -> gradient (derivative dval n) pt) <$> variables pt
 
 descend :: Num a => Point a -> DVal a -> a -> Point a
 descend pt dval alpha =
   zipWith (\(s, v) (s', v') -> (s, v - alpha * v'))
     pt
-    (gradient pt dval)
+    (gradient dval pt)
 
 gradientDescent :: (Num a, Ord a)
                 => Int -> a -> a -> DVal a -> Point a -> Point a
 gradientDescent 0 _ _ _ pt = pt
 gradientDescent n eps alpha f pt =
   let pt'       = descend pt f alpha
-      diffValue = value pt f - value pt' f
+      diffValue = value f pt - value f pt'
       diffPts   = sum $ zipWith (\a b -> (snd a - snd b)^2)
                                        pt pt'
   in
