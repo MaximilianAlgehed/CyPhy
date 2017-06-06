@@ -9,11 +9,11 @@ newtype DVal a = DVal { runDVal :: Point a -> (a, Name -> DVal a) }
 instance Num a => Num (DVal a) where
   l + r    = DVal $ \pt -> let (lv, lv') = runDVal l pt
                                (rv, rv') = runDVal r pt
-                           in (lv + rv, \s -> lv' s + rv' s)
+                           in  (lv + rv, \s -> lv' s + rv' s)
 
   l * r    = DVal $ \pt -> let (lv, lv') = runDVal l pt
                                (rv, rv') = runDVal r pt
-                           in (lv * rv, \s -> lv' s * r
+                           in  (lv * rv, \s -> lv' s * r
                                            +  l * rv' s)
   
   negate v = DVal $ \pt -> let (val, val') = runDVal v pt
@@ -52,8 +52,8 @@ derivative (DVal f) n = DVal $ \pt -> runDVal ((snd (f pt)) n) pt
 gradient :: DVal a -> Point a -> Point a
 gradient dval pt = [ (s, value (derivative dval s) pt) | s <- variables pt ]
 
-hessian :: Point a -> DVal a -> [Point a]
-hessian pt dval = (\n -> gradient (derivative dval n) pt) <$> variables pt
+hessian :: DVal a -> Point a -> [Point a]
+hessian dval pt = (\n -> gradient (derivative dval n) pt) <$> variables pt
 
 descend :: Num a => Point a -> DVal a -> a -> Point a
 descend pt dval alpha =
