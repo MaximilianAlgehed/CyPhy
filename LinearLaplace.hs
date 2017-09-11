@@ -1,39 +1,34 @@
 module LinearLaplace where
+
 import Data.Complex
+import Data.IORef 
+import System.IO.Unsafe
 
-{- Boring aux stuff -}
-liftF :: (a -> a -> a) -> (b -> a) -> (b -> a) -> (b -> a)
-liftF op f g = \b -> f b `op` g b
+type Name = String
 
-instance Num a => Num (b -> a) where
-  (+)         = liftF (+)
-  (*)         = liftF (*)
-  negate      = (negate .)
-  abs         = (abs .)
-  signum      = (signum .)
-  fromInteger = const . fromInteger
+data Operation = Transfer Laplace
+               | Add
+               deriving (Ord, Eq, Show)
 
-{- Where the interesting stuff begins -}
-type Laplace a = Complex a -> Complex a
+data Signal = Var  Name
+            | Comp (IORef (Operation, [Signal]))
+            deriving (Eq)
 
-delta :: RealFloat a => a -> Laplace a 
-delta a s = exp (negate (s * (a :+ 0)))
+comp :: Operation -> [Signal] -> Signal
+comp op ss = Comp (unsafePerformIO $ newIORef (op, ss))
 
-type ID        = Int
+type Polynomial = [Double]
 
-data Node a    = Node { identity :: ID, content :: Content a }
+type Laplace = (Polynomial, Polynomial)
 
-data Content a = Input
-               | Output
-               | Nil
-               | Add ID ID
-               | Transfer ID (Laplace a) ID
+(//) :: Polynomial -> Polynomial -> Laplace
+xs // ys = (xs, ys)
 
-type BlockDiagram a = [Node a]
+scale :: Double -> Signal -> Signal 
+scale fac sig = comp (Transfer $ [fac] // [1]) [sig]
 
-input, output :: ID
-input  = 0
-output = 1
+integ :: Signal -> Signal
+integ s = comp (Transfer $ [1] // [0, 1]) [s]
 
-empty :: BlockDiagram a
-empty = [Node input Input, Node output Output]
+add :: Signal -> Signal -> Signal
+add l r = comp Add [l, r]
