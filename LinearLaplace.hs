@@ -6,15 +6,15 @@ import System.IO.Unsafe
 
 type Name = String
 
-data Operation = Transfer Laplace
-               | Add
-               deriving (Ord, Eq, Show)
+data LaplaceExp = Transfer Laplace
+                | Add
+                | Var Name
+                deriving (Ord, Eq, Show)
 
-data Signal = Var  Name
-            | Comp (IORef (Operation, [Signal]))
+data Signal = Comp (IORef (LaplaceExp, [Signal]))
             deriving (Eq)
 
-comp :: Operation -> [Signal] -> Signal
+comp :: LaplaceExp -> [Signal] -> Signal
 comp op ss = Comp (unsafePerformIO $ newIORef (op, ss))
 
 type Polynomial = [Double]
@@ -23,6 +23,9 @@ type Laplace = (Polynomial, Polynomial)
 
 (//) :: Polynomial -> Polynomial -> Laplace
 xs // ys = (xs, ys)
+
+var :: String -> Signal
+var x = comp (Var x) []
 
 scale :: Double -> Signal -> Signal 
 scale fac sig = comp (Transfer $ [fac] // [1]) [sig]
