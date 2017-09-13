@@ -17,6 +17,9 @@ data Signal = Comp (IORef (LaplaceExp, [Signal]))
 comp :: LaplaceExp -> [Signal] -> Signal
 comp op ss = Comp (unsafePerformIO $ newIORef (op, ss))
 
+contents :: Signal -> (LaplaceExp, [Signal])
+contents (Comp r) = unsafePerformIO $ readIORef r
+
 type Polynomial = [Double]
 
 type Laplace = (Polynomial, Polynomial)

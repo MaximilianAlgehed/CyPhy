@@ -1,4 +1,4 @@
-module BuildGraph where
+module PrintGraph where
 
 import LinearLaplace
 import Data.IORef
